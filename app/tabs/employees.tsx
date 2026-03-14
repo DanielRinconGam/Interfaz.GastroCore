@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList } from "react-native";
 import { useRouter } from "expo-router";
+
 import styles from "../css/employeeStyles";
+
+import AppHeader from "../../scr/components/layout/AppHeader";
+import SidebarMenu from "../../scr/components/layout/SidebarMenu";
 
 type Employee = {
   id: string;
@@ -29,69 +33,84 @@ export default function EmployeesScreen() {
   }, [q]);
 
   return (
-    <View style={styles.page}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.title}>Empleados</Text>
-          <Text style={styles.subtitle}>Administración de usuarios internos</Text>
-        </View>
+    <View style={{ flex: 1, flexDirection: "column", backgroundColor: "#F8FAFC" }}>
+      
+      {/* HEADER */}
+      <AppHeader restaurantName="Restaurante La 85" isOpen={true} />
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          // onPress={() => router.push("/tabs/employees/create")}
-        >
-          <Text style={styles.primaryButtonText}>+ Crear empleado</Text>
-        </TouchableOpacity>
-      </View>
+      {/* BODY */}
+      <View style={{ flex: 1, flexDirection: "row" }}>
 
-      {/* Toolbar */}
-      <View style={styles.toolbar}>
-        <TextInput
-          style={styles.search}
-          placeholder="Buscar por nombre, correo o rol..."
-          value={q}
-          onChangeText={setQ}
-        />
-      </View>
+        {/* SIDEBAR */}
+        <SidebarMenu />
 
-      {/* Tabla */}
-      <View style={styles.card}>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.th, styles.colName]}>Nombre</Text>
-          <Text style={[styles.th, styles.colEmail]}>Correo</Text>
-          <Text style={[styles.th, styles.colRole]}>Rol</Text>
-          <Text style={[styles.th, styles.colStatus]}>Estado</Text>
-          <Text style={[styles.th, styles.colActions]}>Acciones</Text>
-        </View>
+        {/* CONTENIDO */}
+        <View style={{ flex: 1, padding: 20 }}>
 
-        <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View style={styles.sep} />}
-          renderItem={({ item }) => (
-            <View style={styles.tr}>
-              <Text style={[styles.td, styles.colName]} numberOfLines={1}>
-                {item.name}
+          {/* Header interno */}
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>Empleados</Text>
+              <Text style={styles.subtitle}>
+                Administración de usuarios internos
               </Text>
-              <Text style={[styles.td, styles.colEmail]} numberOfLines={1}>
-                {item.email}
-              </Text>
-              <Text style={[styles.td, styles.colRole]}>{item.role}</Text>
-              <Text style={[styles.td, styles.colStatus]}>{item.status}</Text>
-
-              <View style={[styles.td, styles.colActions, styles.actionsRow]}>
-                <TouchableOpacity style={styles.linkBtn}>
-                  <Text style={styles.linkText}>Editar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.dangerBtn}>
-                  <Text style={styles.dangerText}>Desactivar</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          )}
-        />
+
+            <TouchableOpacity style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>+ Crear empleado</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Toolbar */}
+          <View style={styles.toolbar}>
+            <TextInput
+              style={styles.search}
+              placeholder="Buscar por nombre, correo o rol..."
+              value={q}
+              onChangeText={setQ}
+            />
+          </View>
+
+          {/* Tabla */}
+          <View style={styles.card}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.th, styles.colName]}>Nombre</Text>
+              <Text style={[styles.th, styles.colEmail]}>Correo</Text>
+              <Text style={[styles.th, styles.colRole]}>Rol</Text>
+              <Text style={[styles.th, styles.colStatus]}>Estado</Text>
+              <Text style={[styles.th, styles.colActions]}>Acciones</Text>
+            </View>
+
+            <FlatList
+              data={data}
+              keyExtractor={(item) => item.id}
+              ItemSeparatorComponent={() => <View style={styles.sep} />}
+              renderItem={({ item }) => (
+                <View style={styles.tr}>
+                  <Text style={[styles.td, styles.colName]} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.td, styles.colEmail]} numberOfLines={1}>
+                    {item.email}
+                  </Text>
+                  <Text style={[styles.td, styles.colRole]}>{item.role}</Text>
+                  <Text style={[styles.td, styles.colStatus]}>{item.status}</Text>
+
+                  <View style={[styles.td, styles.colActions, styles.actionsRow]}>
+                    <TouchableOpacity style={styles.linkBtn}>
+                      <Text style={styles.linkText}>Editar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.dangerBtn}>
+                      <Text style={styles.dangerText}>Desactivar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
+
+        </View>
       </View>
     </View>
   );

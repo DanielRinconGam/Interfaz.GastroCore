@@ -1,22 +1,22 @@
-import React, { useState } from "react";
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    useFonts,
+} from "@expo-google-fonts/poppins";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+    ImageBackground,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    ImageBackground,
+    Text,
+    TextInput,
+    TouchableOpacity,
     useWindowDimensions,
+    View,
 } from "react-native";
 import styles from "../css/loginStyles";
-import {
-    Poppins_600SemiBold,
-    Poppins_400Regular,
-    useFonts,
-} from "@expo-google-fonts/poppins";
-
 
 
 export default function LoginScreen() {
@@ -25,9 +25,10 @@ export default function LoginScreen() {
     const { width } = useWindowDimensions();
     const isMobile = width < 768;
     const [fontsLoaded] = useFonts({
-    Poppins_600SemiBold,
-    Poppins_400Regular,
-});
+        Poppins_600SemiBold,
+        Poppins_400Regular,
+    });
+    const router = useRouter();
 
     return (
         <KeyboardAvoidingView
@@ -96,7 +97,10 @@ export default function LoginScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity style={styles.loginButton}>
+                        <TouchableOpacity
+                            style={styles.loginButton}
+                            onPress={() => router.replace("../tabs/home")}
+                        >
                             <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
                         </TouchableOpacity>
                         {/*
@@ -107,7 +111,7 @@ export default function LoginScreen() {
                             </TouchableOpacity>
                         </View> */}
                     </View>
-                </View>
+                </View> 
             </ScrollView>
         </KeyboardAvoidingView>
     );

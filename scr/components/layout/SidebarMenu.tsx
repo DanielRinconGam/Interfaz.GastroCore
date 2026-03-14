@@ -1,15 +1,15 @@
 import { usePathname, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Animated,
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    UIManager,
-    View,
+  Animated,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
 } from "react-native";
 
 type MenuItem = {
@@ -76,14 +76,14 @@ export default function SidebarMenu({
         {
           key: "dashboard",
           label: "Dashboard",
-          route: "/dashboard",
-          icon: "📊",
+          route: "../tabs/home",
+          icon: "",
         },
-        { key: "mesas", label: "Mesas", route: "/mesas", icon: "🪑" },
+        { key: "mesas", label: "Mesas", route: "/mesas", icon: "" },
         {
           key: "pedidos",
           label: "Pedidos",
-          icon: "🧾",
+          icon: "",
           children: [
             { key: "p-nuevo", label: "Nuevo pedido", route: "/pedidos/nuevo" },
             { key: "p-activos", label: "Activos", route: "/pedidos/activos" },
@@ -109,7 +109,7 @@ export default function SidebarMenu({
         {
           key: "cocina",
           label: "Cocina",
-          icon: "👨‍🍳",
+          icon: "",
           children: [
             {
               key: "c-prep",
@@ -124,7 +124,7 @@ export default function SidebarMenu({
         {
           key: "caja",
           label: "Caja",
-          icon: "💳",
+          icon: "",
           children: [
             {
               key: "c-porcobrar",
@@ -143,7 +143,7 @@ export default function SidebarMenu({
         {
           key: "catalogo",
           label: "Menú / Productos",
-          icon: "🍔",
+          icon: "",
           children: [
             { key: "cat", label: "Categorías", route: "/catalogo/categorias" },
             { key: "prod", label: "Productos", route: "/catalogo/productos" },
@@ -167,7 +167,7 @@ export default function SidebarMenu({
         {
           key: "inventario",
           label: "Inventario",
-          icon: "📦",
+          icon: "",
           children: [
             {
               key: "inv-stock",
@@ -194,7 +194,7 @@ export default function SidebarMenu({
         {
           key: "clientes",
           label: "Clientes",
-          icon: "👤",
+          icon: "",
           children: [
             { key: "cli-lista", label: "Lista", route: "/clientes" },
             {
@@ -212,9 +212,9 @@ export default function SidebarMenu({
         {
           key: "empleados",
           label: "Empleados",
-          icon: "👥",
+          icon: "",
           children: [
-            { key: "emp-lista", label: "Lista", route: "/empleados" },
+            { key: "emp-lista", label: "Lista", route: "/tabs/employees" },
             { key: "emp-roles", label: "Roles", route: "/empleados/roles" },
             { key: "emp-turnos", label: "Turnos", route: "/empleados/turnos" },
             {
@@ -228,7 +228,7 @@ export default function SidebarMenu({
           key: "mesas-config",
           label: "Mesas (configuración)",
           route: "/admin/mesas",
-          icon: "🪑",
+          icon: "",
         },
       ],
     },
@@ -238,7 +238,7 @@ export default function SidebarMenu({
         {
           key: "reportes",
           label: "Reportes",
-          icon: "📈",
+          icon: "",
           children: [
             {
               key: "rep-dia",
@@ -261,7 +261,7 @@ export default function SidebarMenu({
         {
           key: "config",
           label: "Configuración",
-          icon: "⚙️",
+          icon: "",
           children: [
             {
               key: "conf-perfil",
