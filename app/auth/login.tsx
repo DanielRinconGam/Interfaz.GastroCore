@@ -21,7 +21,7 @@ import {
 } from "react-native";
 import styles from "../css/auth/loginStyles";
 
-const API_BASE_URL = "https://35.209.108.84";
+const API_BASE_URL = "https://gastrocore.ddns.net";
 const GENERIC_LOGIN_ERROR =
   "No fue posible iniciar sesión. Intenta nuevamente.";
 
