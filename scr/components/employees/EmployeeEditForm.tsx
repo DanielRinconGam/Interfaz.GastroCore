@@ -2,15 +2,15 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 const PRIMARY = "#46A38C";
@@ -22,7 +22,7 @@ const API_BASE_URL = "https://gastrocore.ddns.net";
 const EMPLOYEES_URL = `${API_BASE_URL}/api/v1/employees/`;
 const ME_URL = `${API_BASE_URL}/api/v1/auth/me`;
 const GENERIC_ERROR =
-  "No fue posible registrar el empleado. Intenta nuevamente.";
+  "No fue posible actualizar el empleado. Intenta nuevamente.";
 
 const storage = {
   async getItem(key: string) {
@@ -55,7 +55,7 @@ type MeResponse = {
   activo: boolean;
 };
 
-type EmployeeCreateResponse = {
+type Employee = {
   usuario_id: number;
   nombres: string;
   apellidos: string;
@@ -69,12 +69,14 @@ type ApiErrorResponse = {
   detail?: string | { msg?: string } | Array<{ msg?: string }>;
 };
 
-export default function EmployeeForm({
+export default function EmployeeEditForm({
+  employee,
   onBack,
   onSuccess,
 }: {
+  employee: Employee;
   onBack: () => void;
-  onSuccess: () => void;
+  onSuccess: (updatedEmployee: Employee) => void;
 }) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -84,17 +86,11 @@ export default function EmployeeForm({
   const [hasAccess, setHasAccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [formData, setFormData] = useState({
-    nombres: "",
-    apellidos: "",
-    email: "",
-    password: "",
-    sucursal_id: 1,
-    rol: "MESERO",
+    nombres: employee.nombres || "",
+    apellidos: employee.apellidos || "",
+    email: employee.email || "",
+    rol: (employee.rol || "MESERO").toUpperCase(),
   });
-
-  const isValidEmail = (value: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
 
   const clearSessionAndExit = async (message = "Not authenticated") => {
     await storage.removeItem("access_token");
@@ -134,13 +130,6 @@ export default function EmployeeForm({
         }
 
         if (!response.ok) {
-          if (
-            (data as ApiErrorResponse | null)?.detail === "Not authenticated"
-          ) {
-            await clearSessionAndExit("Not authenticated");
-            return;
-          }
-
           await clearSessionAndExit("Not authenticated");
           return;
         }
@@ -161,7 +150,7 @@ export default function EmployeeForm({
 
         if (normalizedRole !== "SUPERADMIN" && normalizedRole !== "ADMIN") {
           setHasAccess(false);
-          setErrorMsg("No tienes permisos para registrar empleados.");
+          setErrorMsg("No tienes permisos para editar empleados.");
           return;
         }
 
@@ -176,27 +165,20 @@ export default function EmployeeForm({
     validateAccess();
   }, []);
 
-  const handleCreateEmployee = async () => {
+  const handleUpdateEmployee = async () => {
     const nombres = formData.nombres.trim();
     const apellidos = formData.apellidos.trim();
-    const email = formData.email.trim().toLowerCase();
-    const password = formData.password.trim();
-    const rol = formData.rol;
+    const rol = formData.rol.toUpperCase();
 
     setErrorMsg("");
 
     if (!hasAccess) {
-      setErrorMsg("No tienes permisos para registrar empleados.");
+      setErrorMsg("No tienes permisos para editar empleados.");
       return;
     }
 
-    if (!nombres || !apellidos || !email || !password) {
-      setErrorMsg("Todos los campos son obligatorios.");
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setErrorMsg("Ingresa un correo electrónico válido.");
+    if (!nombres || !apellidos) {
+      setErrorMsg("Nombres y apellidos son obligatorios.");
       return;
     }
 
@@ -239,14 +221,7 @@ export default function EmployeeForm({
       }
 
       if (!meResponse.ok) {
-        if (
-          (meData as ApiErrorResponse | null)?.detail === "Not authenticated"
-        ) {
-          await clearSessionAndExit("Not authenticated");
-          return;
-        }
-
-        setErrorMsg(GENERIC_ERROR);
+        await clearSessionAndExit("Not authenticated");
         return;
       }
 
@@ -259,21 +234,18 @@ export default function EmployeeForm({
         validatedUser?.activo !== true ||
         (normalizedRole !== "SUPERADMIN" && normalizedRole !== "ADMIN")
       ) {
-        setErrorMsg("No tienes permisos para registrar empleados.");
+        setErrorMsg("No tienes permisos para editar empleados.");
         return;
       }
 
       const payload = {
         nombres,
         apellidos,
-        email,
-        password,
-        sucursal_id: formData.sucursal_id,
         rol,
       };
 
-      const response = await fetch(EMPLOYEES_URL, {
-        method: "POST",
+      const response = await fetch(`${EMPLOYEES_URL}${employee.usuario_id}`, {
+        method: "PUT",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
@@ -284,7 +256,7 @@ export default function EmployeeForm({
 
       const rawText = await response.text();
 
-      let data: EmployeeCreateResponse | ApiErrorResponse | null = null;
+      let data: Employee | ApiErrorResponse | null = null;
 
       try {
         data = rawText ? JSON.parse(rawText) : null;
@@ -302,22 +274,25 @@ export default function EmployeeForm({
         return;
       }
 
-      const employeeData = data as EmployeeCreateResponse;
+      const updatedEmployee = data as Employee;
 
       if (
-        typeof employeeData?.usuario_id !== "number" ||
-        !employeeData?.nombres ||
-        !employeeData?.apellidos ||
-        !employeeData?.email ||
-        !employeeData?.rol ||
-        typeof employeeData?.activo !== "boolean" ||
-        !employeeData?.created_at
+        typeof updatedEmployee?.usuario_id !== "number" ||
+        !updatedEmployee?.nombres ||
+        !updatedEmployee?.apellidos ||
+        !updatedEmployee?.email ||
+        !updatedEmployee?.rol ||
+        typeof updatedEmployee?.activo !== "boolean" ||
+        !updatedEmployee?.created_at
       ) {
         setErrorMsg(GENERIC_ERROR);
         return;
       }
 
-      onSuccess();
+      onSuccess({
+        ...updatedEmployee,
+        rol: (updatedEmployee.rol || "").toUpperCase(),
+      });
     } catch (error) {
       setErrorMsg(GENERIC_ERROR);
     } finally {
@@ -367,9 +342,9 @@ export default function EmployeeForm({
             <Text style={styles.backText}>Volver a la lista</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>Nuevo Registro</Text>
+          <Text style={styles.title}>Editar empleado</Text>
           <Text style={styles.subtitle}>
-            Ingrese los datos para el alta de personal.
+            Actualiza los datos del empleado seleccionado.
           </Text>
         </View>
 
@@ -406,26 +381,9 @@ export default function EmployeeForm({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Correo Electrónico</Text>
               <TextInput
-                style={styles.input}
-                placeholder="correo@ejemplo.com"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
+                style={[styles.input, styles.inputDisabled]}
                 value={formData.email}
-                onChangeText={(v) => setFormData({ ...formData, email: v })}
-                editable={!loading}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                secureTextEntry
-                value={formData.password}
-                onChangeText={(v) => setFormData({ ...formData, password: v })}
-                editable={!loading}
+                editable={false}
               />
             </View>
           </View>
@@ -475,13 +433,13 @@ export default function EmployeeForm({
               isMobile && { width: "100%" },
               loading && { opacity: 0.7 },
             ]}
-            onPress={handleCreateEmployee}
+            onPress={handleUpdateEmployee}
             disabled={loading || !hasAccess}
           >
             {loading ? (
               <ActivityIndicator color="#FFF" size="small" />
             ) : (
-              <Text style={styles.submitBtnText}>Confirmar y Guardar</Text>
+              <Text style={styles.submitBtnText}>Guardar cambios</Text>
             )}
           </TouchableOpacity>
 
@@ -530,6 +488,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TEXT_MAIN,
     backgroundColor: "#F8FAFC",
+  },
+  inputDisabled: {
+    color: TEXT_MUTED,
+    backgroundColor: "#F1F5F9",
   },
 
   errorText: {
