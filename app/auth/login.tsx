@@ -3,10 +3,11 @@ import {
   Poppins_600SemiBold,
   useFonts,
 } from "@expo-google-fonts/poppins";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -33,9 +34,8 @@ type LoginResponse = {
     nombres: string;
     apellidos: string;
     email: string;
-    es_global: boolean;
-    cargo: string | null;
-    rol: string | null;
+    rol: string;
+    activo: boolean;
   };
 };
 
@@ -75,7 +75,9 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { width, height } = useWindowDimensions();
   const isMobile = width < 768;
@@ -87,7 +89,27 @@ export default function LoginScreen() {
     Poppins_400Regular,
   });
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const token = await storage.getItem("access_token");
+        const user = await storage.getItem("user");
+
+        if (token && user) {
+          router.replace("/tabs/home");
+          return;
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  if (!fontsLoaded || checkingSession) return null;
 
   const getApiErrorMessage = (data: ApiErrorResponse | null) => {
     if (!data) return null;
@@ -96,12 +118,42 @@ export default function LoginScreen() {
       return data.detail;
     }
 
+    if (
+      typeof data.detail === "object" &&
+      !Array.isArray(data.detail) &&
+      data.detail?.msg
+    ) {
+      return data.detail.msg;
+    }
+
+    if (Array.isArray(data.detail) && data.detail.length > 0) {
+      return data.detail[0]?.msg || null;
+    }
+
     return null;
   };
 
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
   const handleLogin = async () => {
-    setLoading(true);
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
     setErrorMsg("");
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setErrorMsg("Email y contraseña son obligatorios.");
+      return;
+    }
+
+    if (!isValidEmail(trimmedEmail)) {
+      setErrorMsg("Ingresa un correo electrónico válido.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const url = `${API_BASE_URL}/api/v1/auth/login`;
@@ -113,8 +165,8 @@ export default function LoginScreen() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email.trim(),
-          password,
+          email: trimmedEmail,
+          password: trimmedPassword,
         }),
       });
 
@@ -139,7 +191,11 @@ export default function LoginScreen() {
       if (
         !loginData?.access_token ||
         !loginData?.token_type ||
-        !loginData?.user
+        !loginData?.user ||
+        typeof loginData.user.usuario_id !== "number" ||
+        !loginData.user.nombres ||
+        !loginData.user.apellidos ||
+        !loginData.user.email
       ) {
         setErrorMsg(GENERIC_LOGIN_ERROR);
         return;
@@ -256,15 +312,46 @@ export default function LoginScreen() {
                 Contraseña
               </Text>
 
-              <TextInput
-                style={[styles.input, { fontFamily: "Poppins_400Regular" }]}
-                placeholder="••••••••"
-                placeholderTextColor="#7A8F89"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!loading}
-              />
+              <View
+                style={{
+                  position: "relative",
+                  justifyContent: "center",
+                }}
+              >
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      fontFamily: "Poppins_400Regular",
+                      paddingRight: 50,
+                    },
+                  ]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#7A8F89"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  editable={!loading}
+                />
+
+                <TouchableOpacity
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  disabled={loading}
+                  style={{
+                    position: "absolute",
+                    right: 14,
+                    height: "100%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={22}
+                    color="#1F6B5C"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.optionsRow}>
