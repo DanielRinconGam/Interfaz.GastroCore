@@ -20,6 +20,9 @@ export default function SidebarMenu({
   sections,
   expandedWidth = 260,
   collapsedWidth = 72,
+  isMobile = false,
+  mobileOpen = false,
+  onCloseMobile,
 }: any) {
   const router = useRouter();
   const pathname = usePathname();
@@ -41,12 +44,11 @@ export default function SidebarMenu({
     }).start();
   }, [collapsed]);
 
-  // 🔴 LOGOUT FUNCIONANDO (WEB + MOBILE + RUTA CORRECTA)
+  // 🔴 LOGOUT FUNCIONANDO
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
 
-      // limpiar storage correctamente
       if (Platform.OS === "web") {
         localStorage.removeItem("access_token");
         localStorage.removeItem("token_type");
@@ -57,12 +59,7 @@ export default function SidebarMenu({
         await SecureStore.deleteItemAsync("user");
       }
 
-      // 🔥 ruta corregida
-      router.replace("/auth/login");
-
-      // 👉 si por alguna razón replace falla, usa esto:
-      // router.push("/login");
-
+      router.replace("/auth/login"); 
     } catch (error) {
       router.replace("/auth/login");
     } finally {
@@ -71,7 +68,10 @@ export default function SidebarMenu({
   };
 
   const go = (route?: string) => {
-    if (route) router.push(route as any);
+    if (route) {
+      router.push(route as any);
+      if (isMobile && onCloseMobile) onCloseMobile(); // 🔥 cerrar al navegar en mobile
+    }
   };
 
   const renderItem = (item: any) => {
@@ -115,53 +115,82 @@ export default function SidebarMenu({
     );
   };
 
+  // 🔥 ocultar completamente en mobile si está cerrado
+  if (isMobile && !mobileOpen) return null;
+
   return (
-    <Animated.View style={[styles.sidebar, { width: widthAnim }]}>
-      {checkingAuth ? (
-        <ActivityIndicator color={PRIMARY} />
-      ) : (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          
-          {/* 🔹 MENÚ */}
-          {data.map((section: any, i: number) => (
-            <View key={i} style={styles.section}>
-              {!collapsed && (
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-              )}
-              {section.items.map(renderItem)}
-            </View>
-          ))}
-
-          {/* 🔻 BOTÓN LOGOUT */}
-          <View style={styles.bottomSection}>
-            <Pressable
-              onPress={handleLogout}
-              disabled={loggingOut}
-              style={({ pressed }) => [
-                styles.item,
-                styles.logoutItem,
-                pressed && styles.logoutItemPressed,
-              ]}
-            >
-              {loggingOut ? (
-                <ActivityIndicator size="small" color="#DC2626" />
-              ) : (
-                <MaterialCommunityIcons
-                  name="logout"
-                  size={20}
-                  color="#DC2626"
-                />
-              )}
-
-              {!collapsed && (
-                <Text style={styles.logoutLabel}>
-                  {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </ScrollView>
+    <>
+      {/* 🔥 overlay para cerrar tocando afuera */}
+      {isMobile && (
+        <Pressable
+          onPress={onCloseMobile}
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 998,
+          }}
+        />
       )}
-    </Animated.View>
+
+      <Animated.View
+        style={[
+          styles.sidebar,
+          { width: widthAnim },
+          isMobile && {
+            position: "absolute",
+            zIndex: 999,
+            height: "100%",
+          },
+        ]}
+      >
+        {checkingAuth ? (
+          <ActivityIndicator color={PRIMARY} />
+        ) : (
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            
+            {/* 🔹 MENÚ */}
+            {data.map((section: any, i: number) => (
+              <View key={i} style={styles.section}>
+                {!collapsed && (
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                )}
+                {section.items.map(renderItem)}
+              </View>
+            ))}
+
+            {/* 🔻 BOTÓN LOGOUT */}
+            <View style={styles.bottomSection}>
+              <Pressable
+                onPress={handleLogout}
+                disabled={loggingOut}
+                style={({ pressed }) => [
+                  styles.item,
+                  styles.logoutItem,
+                  pressed && styles.logoutItemPressed,
+                ]}
+              >
+                {loggingOut ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <MaterialCommunityIcons
+                    name="logout"
+                    size={20}
+                    color="#DC2626"
+                  />
+                )}
+
+                {!collapsed && (
+                  <Text style={styles.logoutLabel}>
+                    {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </ScrollView>
+        )}
+      </Animated.View>
+    </>
   );
 }

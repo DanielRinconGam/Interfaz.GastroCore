@@ -237,7 +237,7 @@ export default function EmployeesScreen() {
                 setShowEditForm(false);
                 setEmployeeToEdit(null);
               }}
-              onSuccess={(updated) => {
+              onSuccess={(updated: Employee) => {  // ✅ FIX AQUÍ
                 setEmployees((prev) =>
                   prev.map((e) =>
                     e.usuario_id === updated.usuario_id ? updated : e
