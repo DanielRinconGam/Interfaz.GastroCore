@@ -1,16 +1,17 @@
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import {
   ActivityIndicator,
   Platform,
-  StyleSheet,
   View,
   useWindowDimensions,
 } from "react-native";
+
 import AppHeader from "../../scr/components/layout/AppHeader";
 import SidebarMenu from "../../scr/components/layout/SidebarMenu";
+import styles, { PRIMARY } from "../css/auth/homeStyles";
 
 const storage = {
   async getItem(key: string) {
@@ -30,39 +31,41 @@ export default function Index() {
   const [collapsed, setCollapsed] = useState(true);
   const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   const checkAuth = async () => {
     try {
       const token = await storage.getItem("access_token");
 
       if (!token) {
+        // 🔥 REDIRECCIÓN SEGURA
         router.replace("/auth/login");
-      } else {
-        setIsChecking(false);
+        return;
       }
+
+      setIsChecking(false);
     } catch (error) {
       router.replace("/auth/login");
     }
   };
 
-  useEffect(() => {
-    if (!isMobile) setMobileOpen(false);
-  }, [isMobile]);
+  // 🔥 SE EJECUTA CADA VEZ QUE LA PANTALLA SE ACTIVA
+  useFocusEffect(
+    useCallback(() => {
+      setIsChecking(true); // importante para evitar parpadeos raros
+      checkAuth();
+    }, [])
+  );
+
+  // cerrar menú mobile si cambia tamaño
+  useFocusEffect(
+    useCallback(() => {
+      if (!isMobile) setMobileOpen(false);
+    }, [isMobile])
+  );
 
   if (isChecking) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#FFFFFF",
-        }}
-      >
-        <ActivityIndicator size="large" color="#46A38C" />
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color={PRIMARY} />
       </View>
     );
   }
@@ -78,6 +81,7 @@ export default function Index() {
         onMenuPress={() => setMobileOpen((prev) => !prev)}
       />
 
+      {/* Sidebar Mobile */}
       {isMobile && (
         <SidebarMenu
           isMobile={true}
@@ -87,6 +91,7 @@ export default function Index() {
       )}
 
       <View style={styles.body}>
+        {/* Sidebar Desktop */}
         {!isMobile && (
           <SidebarMenu
             isMobile={false}
@@ -95,24 +100,11 @@ export default function Index() {
           />
         )}
 
-        <View style={styles.content}>{/* Tu contenido protegido aquí */}</View>
+        {/* Contenido */}
+        <View style={styles.content}>
+          {/* Tu contenido protegido aquí */}
+        </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  body: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#F8FAFC",
-  },
-});
